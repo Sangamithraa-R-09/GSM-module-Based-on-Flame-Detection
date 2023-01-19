@@ -1,0 +1,74 @@
+#include <SoftwareSerial.h>
+//-----------------------------------------------------------------------------------
+//Alert reciever's phone number with country code
+const String PHONE_1 = "+9779800990088";
+const String PHONE_2 = ""; //optional
+const String PHONE_3 = ""; //optional
+//-----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
+#define rxPin 2
+#define txPin 3
+SoftwareSerial sim800L(rxPin,txPin);
+//-----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
+int Flame_sensor = 5;
+int Flame_detected;
+//-----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
+#define buzzer_pin 4
+//-----------------------------------------------------------------------------------
+void setup()
+{
+  //-----------------------------------------------------------------------------------
+  //Begin serial communication: Arduino IDE (Serial Monitor)
+  Serial.begin(115200);
+  
+  //-----------------------------------------------------------------------------------
+  //Begin serial communication: SIM800L
+  sim800L.begin(9600);
+  
+  //-----------------------------------------------------------------------------------
+  pinMode(Flame_sensor, INPUT);
+  
+  //-----------------------------------------------------------------------------------
+  pinMode(buzzer_pin, OUTPUT);
+  digitalWrite(buzzer_pin,LOW);
+  
+  //----------------------------------------------------------------------------------
+  Serial.println("Initializing...");
+  //Once the handshake test is successful, it will back to OK
+  sim800L.println("AT");
+  delay(1000);
+  sim800L.println("AT+CMGF=1");
+  delay(1000);
+  //-----------------------------------------------------------------------------------
+}
+void loop()
+{
+  while(sim800L.available()){
+  Serial.println(sim800L.readString());
+  }
+  
+  Flame_detected = digitalRead(Flame_sensor);
+  Serial.println(Flame_detected);
+  //delay(100);
+  //-----------------------------------------------------------------------------------
+  //The fire is detected, trigger Alarm and send sms
+  if (Flame_detected == 0)
+  {
+    digitalWrite(buzzer_pin,HIGH);
+      Serial.println("Fire detected...! take action immediately.");
+      send_multi_sms();
+      make_multi_call();
+    }
+ //-----------------------------------------------------------------------------------
+  //No fire is detected, turn OFF Alarm
+  else
+  {
+    digitalWrite(buzzer_pin,LOW);
+    }
+//-----------------------------------------------------------------------------------
+}
+//-----------------------------------------------------------------------------------
+void send_multi_sms()
+{
